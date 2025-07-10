@@ -1,0 +1,877 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Algorithm Visualizer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .bar {
+            transition: all 0.3s ease;
+        }
+        .node {
+            transition: all 0.3s ease;
+        }
+        .edge {
+            stroke-width: 2;
+            stroke: #94a3b8;
+        }
+        .highlight {
+            animation: pulse 1.5s infinite;
+        }
+        @keyframes pulse {
+            0% { opacity: 0.7; }
+            50% { opacity: 1; }
+            100% { opacity: 0.7; }
+        }
+        .code-line {
+            transition: all 0.3s ease;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <div class="container mx-auto px-4 py-8">
+        <header class="mb-8 text-center">
+            <h1 class="text-4xl font-bold text-indigo-700 mb-2">Algorithm Visualizer</h1>
+            <p class="text-gray-600">Interactive visualization of sorting and graph algorithms</p>
+        </header>
+
+        <div class="flex flex-col lg:flex-row gap-6">
+            <!-- Left Panel - Controls -->
+            <div class="w-full lg:w-1/4 bg-white rounded-lg shadow-md p-6">
+                <div class="mb-6">
+                    <h2 class="text-xl font-semibold text-gray-800 mb-4">Algorithm Selection</h2>
+                    <div class="space-y-4">
+                        <div>
+                            <h3 class="font-medium text-gray-700 mb-2">Sorting Algorithms</h3>
+                            <div class="grid grid-cols-2 gap-2">
+                                <button onclick="initSorting('bubble')" class="algorithm-btn bg-indigo-100 text-indigo-700 hover:bg-indigo-200">Bubble Sort</button>
+                                <button onclick="initSorting('merge')" class="algorithm-btn bg-indigo-100 text-indigo-700 hover:bg-indigo-200">Merge Sort</button>
+                                <button onclick="initSorting('quick')" class="algorithm-btn bg-indigo-100 text-indigo-700 hover:bg-indigo-200">Quick Sort</button>
+                                <button onclick="initSorting('insertion')" class="algorithm-btn bg-indigo-100 text-indigo-700 hover:bg-indigo-200">Insertion Sort</button>
+                            </div>
+                        </div>
+                        <div>
+                            <h3 class="font-medium text-gray-700 mb-2">Graph Algorithms</h3>
+                            <div class="grid grid-cols-2 gap-2">
+                                <button onclick="initGraph('bfs')" class="algorithm-btn bg-emerald-100 text-emerald-700 hover:bg-emerald-200">BFS</button>
+                                <button onclick="initGraph('dfs')" class="algorithm-btn bg-emerald-100 text-emerald-700 hover:bg-emerald-200">DFS</button>
+                                <button onclick="initGraph('dijkstra')" class="algorithm-btn bg-emerald-100 text-emerald-700 hover:bg-emerald-200">Dijkstra's</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mb-6">
+                    <h2 class="text-xl font-semibold text-gray-800 mb-4">Controls</h2>
+                    <div class="flex justify-between items-center mb-4">
+                        <button id="playBtn" onclick="togglePlay()" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 flex items-center gap-2">
+                            <i class="fas fa-play"></i> Play
+                        </button>
+                        <button onclick="stepForward()" class="bg-gray-200 text-gray-700 px-4 py-2 rounded hover:bg-gray-300 flex items-center gap-2">
+                            <i class="fas fa-step-forward"></i> Step
+                        </button>
+                        <button onclick="resetVisualization()" class="bg-gray-200 text-gray-700 px-4 py-2 rounded hover:bg-gray-300 flex items-center gap-2">
+                            <i class="fas fa-redo"></i> Reset
+                        </button>
+                    </div>
+                    <div>
+                        <label class="block text-gray-700 mb-2">Speed</label>
+                        <input type="range" id="speedControl" min="50" max="1000" value="300" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                    </div>
+                </div>
+
+                <div>
+                    <h2 class="text-xl font-semibold text-gray-800 mb-4">Configuration</h2>
+                    <div class="space-y-4">
+                        <div id="arrayConfig" class="space-y-2">
+                            <label class="block text-gray-700">Array Size</label>
+                            <input type="range" id="arraySize" min="5" max="25" value="15" class="w-full">
+                            <button onclick="generateNewArray()" class="w-full bg-indigo-500 text-white py-2 rounded hover:bg-indigo-600">Generate New Array</button>
+                        </div>
+                        <div id="graphConfig" class="hidden space-y-2">
+                            <label class="block text-gray-700">Graph Type</label>
+                            <select id="graphType" class="w-full border rounded p-2">
+                                <option value="grid">Grid</option>
+                                <option value="random">Random</option>
+                            </select>
+                            <button onclick="generateNewGraph()" class="w-full bg-emerald-500 text-white py-2 rounded hover:bg-emerald-600">Generate New Graph</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main Visualization Area -->
+            <div class="w-full lg:w-2/4 bg-white rounded-lg shadow-md p-6">
+                <h2 class="text-xl font-semibold text-gray-800 mb-4" id="currentAlgorithm">Select an Algorithm</h2>
+                <div id="visualizationContainer" class="h-96 flex items-end justify-center bg-gray-50 rounded-lg p-4">
+                    <div class="text-gray-400 flex items-center justify-center h-full">
+                        <div class="text-center">
+                            <i class="fas fa-project-diagram text-5xl mb-4"></i>
+                            <p>Please select an algorithm to visualize</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-4">
+                    <div class="flex justify-between text-sm text-gray-500">
+                        <span>Comparisons: <span id="comparisonCount">0</span></span>
+                        <span>Swaps: <span id="swapCount">0</span></span>
+                        <span>Time: <span id="timeElapsed">0</span>ms</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Panel - Code Explanation -->
+            <div class="w-full lg:w-1/4 bg-white rounded-lg shadow-md p-6">
+                <h2 class="text-xl font-semibold text-gray-800 mb-4">Code Walkthrough</h2>
+                <div id="codeExplanation" class="bg-gray-50 p-4 rounded-lg font-mono text-sm overflow-auto max-h-96">
+                    <p class="text-gray-500">Algorithm code will appear here when selected.</p>
+                </div>
+                <div class="mt-4">
+                    <h3 class="font-medium text-gray-700 mb-2">Explanation</h3>
+                    <div id="algorithmExplanation" class="text-sm text-gray-600">
+                        <p>Select an algorithm to see its explanation and step-by-step visualization.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // State management
+        let currentAlgorithm = null;
+        let isPlaying = false;
+        let animationSpeed = 300;
+        let animationInterval = null;
+        let arraySize = 15;
+        let array = [];
+        let comparisons = 0;
+        let swaps = 0;
+        let startTime = 0;
+        let graph = null;
+        let graphNodes = [];
+        let graphEdges = [];
+
+        // DOM elements
+        const visualizationContainer = document.getElementById('visualizationContainer');
+        const currentAlgorithmTitle = document.getElementById('currentAlgorithm');
+        const codeExplanation = document.getElementById('codeExplanation');
+        const algorithmExplanation = document.getElementById('algorithmExplanation');
+        const comparisonCount = document.getElementById('comparisonCount');
+        const swapCount = document.getElementById('swapCount');
+        const timeElapsed = document.getElementById('timeElapsed');
+        const playBtn = document.getElementById('playBtn');
+        const speedControl = document.getElementById('speedControl');
+        const arraySizeControl = document.getElementById('arraySize');
+        const arrayConfig = document.getElementById('arrayConfig');
+        const graphConfig = document.getElementById('graphConfig');
+
+        // Event listeners
+        speedControl.addEventListener('input', () => {
+            animationSpeed = 1050 - speedControl.value; // Invert for more intuitive control
+            if (isPlaying) {
+                clearInterval(animationInterval);
+                startAnimation();
+            }
+        });
+
+        arraySizeControl.addEventListener('input', () => {
+            arraySize = arraySizeControl.value;
+            generateNewArray();
+        });
+
+        // Initialize
+        function initSorting(algorithm) {
+            currentAlgorithm = algorithm;
+            currentAlgorithmTitle.textContent = `${algorithm.charAt(0).toUpperCase() + algorithm.slice(1)} Sort`;
+            
+            // Show array config, hide graph config
+            arrayConfig.classList.remove('hidden');
+            graphConfig.classList.add('hidden');
+            
+            // Generate new array
+            generateNewArray();
+            
+            // Update code explanation
+            updateCodeExplanation(algorithm);
+            
+            // Update algorithm explanation
+            updateAlgorithmExplanation(algorithm);
+        }
+
+        function initGraph(algorithm) {
+            currentAlgorithm = algorithm;
+            currentAlgorithmTitle.textContent = algorithm.toUpperCase();
+            
+            // Show graph config, hide array config
+            graphConfig.classList.add('hidden');
+            arrayConfig.classList.add('hidden');
+            graphConfig.classList.remove('hidden');
+            
+            // Generate new graph
+            generateNewGraph();
+            
+            // Update code explanation
+            updateCodeExplanation(algorithm);
+            
+            // Update algorithm explanation
+            updateAlgorithmExplanation(algorithm);
+        }
+
+        function generateNewArray() {
+            resetCounters();
+            array = [];
+            for (let i = 0; i < arraySize; i++) {
+                array.push(Math.floor(Math.random() * 90) + 10); // Values between 10-100
+            }
+            renderArray();
+        }
+
+        function generateNewGraph() {
+            resetCounters();
+            const graphType = document.getElementById('graphType').value;
+            
+            if (graphType === 'grid') {
+                createGridGraph();
+            } else {
+                createRandomGraph();
+            }
+            
+            renderGraph();
+        }
+
+        function createGridGraph() {
+            graphNodes = [];
+            graphEdges = [];
+            
+            // Create 4x4 grid
+            const rows = 4;
+            const cols = 4;
+            let nodeId = 1;
+            
+            for (let i = 0; i < rows; i++) {
+                for (let j = 0; j < cols; j++) {
+                    graphNodes.push({
+                        id: nodeId,
+                        x: 50 + j * 80,
+                        y: 50 + i * 80,
+                        visited: false,
+                        distance: Infinity,
+                        previous: null
+                    });
+                    
+                    // Connect to right neighbor
+                    if (j < cols - 1) {
+                        graphEdges.push({
+                            source: nodeId,
+                            target: nodeId + 1,
+                            weight: Math.floor(Math.random() * 10) + 1
+                        });
+                    }
+                    
+                    // Connect to bottom neighbor
+                    if (i < rows - 1) {
+                        graphEdges.push({
+                            source: nodeId,
+                            target: nodeId + cols,
+                            weight: Math.floor(Math.random() * 10) + 1
+                        });
+                    }
+                    
+                    nodeId++;
+                }
+            }
+            
+            // Set start and end nodes
+            graphNodes[0].distance = 0;
+        }
+
+        function createRandomGraph() {
+            graphNodes = [];
+            graphEdges = [];
+            const nodeCount = 10;
+            
+            // Create nodes
+            for (let i = 1; i <= nodeCount; i++) {
+                graphNodes.push({
+                    id: i,
+                    x: 50 + Math.random() * 300,
+                    y: 50 + Math.random() * 200,
+                    visited: false,
+                    distance: Infinity,
+                    previous: null
+                });
+            }
+            
+            // Create edges (approximately 2 per node)
+            for (let i = 1; i <= nodeCount; i++) {
+                const target1 = Math.floor(Math.random() * nodeCount) + 1;
+                if (target1 !== i) {
+                    graphEdges.push({
+                        source: i,
+                        target: target1,
+                        weight: Math.floor(Math.random() * 10) + 1
+                    });
+                }
+                
+                const target2 = Math.floor(Math.random() * nodeCount) + 1;
+                if (target2 !== i && target2 !== target1) {
+                    graphEdges.push({
+                        source: i,
+                        target: target2,
+                        weight: Math.floor(Math.random() * 10) + 1
+                    });
+                }
+            }
+            
+            // Set start node
+            graphNodes[0].distance = 0;
+        }
+
+        function renderArray() {
+            visualizationContainer.innerHTML = '';
+            const maxHeight = visualizationContainer.clientHeight - 20;
+            const barWidth = Math.min(30, visualizationContainer.clientWidth / array.length - 2);
+            
+            array.forEach((value, index) => {
+                const bar = document.createElement('div');
+                bar.className = 'bar bg-indigo-400 mx-0.5 rounded-t';
+                bar.style.height = `${(value / 100) * maxHeight}px`;
+                bar.style.width = `${barWidth}px`;
+                bar.dataset.index = index;
+                bar.dataset.value = value;
+                
+                // Add value label
+                const label = document.createElement('div');
+                label.className = 'text-xs text-center mt-1';
+                label.textContent = value;
+                bar.appendChild(label);
+                
+                visualizationContainer.appendChild(bar);
+            });
+        }
+
+        function renderGraph() {
+            visualizationContainer.innerHTML = '';
+            const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+            svg.setAttribute("width", "100%");
+            svg.setAttribute("height", "100%");
+            svg.setAttribute("viewBox", "0 0 400 300");
+            
+            // Draw edges first (so they appear behind nodes)
+            graphEdges.forEach(edge => {
+                const sourceNode = graphNodes.find(n => n.id === edge.source);
+                const targetNode = graphNodes.find(n => n.id === edge.target);
+                
+                const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+                line.setAttribute("x1", sourceNode.x);
+                line.setAttribute("y1", sourceNode.y);
+                line.setAttribute("x2", targetNode.x);
+                line.setAttribute("y2", targetNode.y);
+                line.setAttribute("class", "edge");
+                
+                // Add weight label
+                const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
+                text.setAttribute("x", (sourceNode.x + targetNode.x) / 2);
+                text.setAttribute("y", (sourceNode.y + targetNode.y) / 2);
+                text.setAttribute("class", "text-xs fill-gray-500");
+                text.textContent = edge.weight;
+                
+                svg.appendChild(line);
+                svg.appendChild(text);
+            });
+            
+            // Draw nodes
+            graphNodes.forEach(node => {
+                const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+                circle.setAttribute("cx", node.x);
+                circle.setAttribute("cy", node.y);
+                circle.setAttribute("r", 15);
+                circle.setAttribute("class", `node fill-emerald-400 stroke-emerald-600 ${node.distance === 0 ? 'highlight' : ''}`);
+                circle.dataset.id = node.id;
+                
+                // Add node ID
+                const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
+                text.setAttribute("x", node.x);
+                text.setAttribute("y", node.y + 5);
+                text.setAttribute("class", "text-xs fill-white text-center");
+                text.setAttribute("text-anchor", "middle");
+                text.textContent = node.id;
+                
+                svg.appendChild(circle);
+                svg.appendChild(text);
+            });
+            
+            visualizationContainer.appendChild(svg);
+        }
+
+        function updateCodeExplanation(algorithm) {
+            let code = '';
+            let language = 'javascript';
+            
+            switch (algorithm) {
+                case 'bubble':
+                    code = `function bubbleSort(arr) {
+  let n = arr.length;
+  for (let i = 0; i < n-1; i++) {
+    for (let j = 0; j < n-i-1; j++) {
+      if (arr[j] > arr[j+1]) {
+        // Swap elements
+        [arr[j], arr[j+1]] = [arr[j+1], arr[j]];
+      }
+    }
+  }
+  return arr;
+}`;
+                    break;
+                case 'merge':
+                    code = `function mergeSort(arr) {
+  if (arr.length <= 1) return arr;
+  
+  const mid = Math.floor(arr.length / 2);
+  const left = mergeSort(arr.slice(0, mid));
+  const right = mergeSort(arr.slice(mid));
+  
+  return merge(left, right);
+}
+
+function merge(left, right) {
+  let result = [];
+  let i = 0, j = 0;
+  
+  while (i < left.length && j < right.length) {
+    if (left[i] < right[j]) {
+      result.push(left[i++]);
+    } else {
+      result.push(right[j++]);
+    }
+  }
+  
+  return result.concat(left.slice(i)).concat(right.slice(j));
+}`;
+                    break;
+                case 'quick':
+                    code = `function quickSort(arr, low = 0, high = arr.length - 1) {
+  if (low < high) {
+    const pi = partition(arr, low, high);
+    quickSort(arr, low, pi - 1);
+    quickSort(arr, pi + 1, high);
+  }
+  return arr;
+}
+
+function partition(arr, low, high) {
+  const pivot = arr[high];
+  let i = low - 1;
+  
+  for (let j = low; j < high; j++) {
+    if (arr[j] < pivot) {
+      i++;
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+  }
+  
+  [arr[i+1], arr[high]] = [arr[high], arr[i+1]];
+  return i + 1;
+}`;
+                    break;
+                case 'insertion':
+                    code = `function insertionSort(arr) {
+  for (let i = 1; i < arr.length; i++) {
+    let key = arr[i];
+    let j = i - 1;
+    
+    while (j >= 0 && arr[j] > key) {
+      arr[j + 1] = arr[j];
+      j--;
+    }
+    arr[j + 1] = key;
+  }
+  return arr;
+}`;
+                    break;
+                case 'bfs':
+                    code = `function bfs(graph, start) {
+  const queue = [start];
+  const visited = new Set([start]);
+  const result = [];
+  
+  while (queue.length) {
+    const node = queue.shift();
+    result.push(node);
+    
+    for (const neighbor of graph[node]) {
+      if (!visited.has(neighbor)) {
+        visited.add(neighbor);
+        queue.push(neighbor);
+      }
+    }
+  }
+  return result;
+}`;
+                    break;
+                case 'dfs':
+                    code = `function dfs(graph, start) {
+  const stack = [start];
+  const visited = new Set();
+  const result = [];
+  
+  while (stack.length) {
+    const node = stack.pop();
+    
+    if (!visited.has(node)) {
+      visited.add(node);
+      result.push(node);
+      
+      // Push neighbors in reverse order to visit them left-to-right
+      for (let i = graph[node].length - 1; i >= 0; i--) {
+        stack.push(graph[node][i]);
+      }
+    }
+  }
+  return result;
+}`;
+                    break;
+                case 'dijkstra':
+                    code = `function dijkstra(graph, start) {
+  const distances = {};
+  const previous = {};
+  const nodes = new PriorityQueue();
+  
+  // Initialize distances
+  for (const node in graph) {
+    distances[node] = node === start ? 0 : Infinity;
+    nodes.enqueue(node, distances[node]);
+  }
+  
+  while (!nodes.isEmpty()) {
+    const smallest = nodes.dequeue();
+    
+    for (const neighbor in graph[smallest]) {
+      const alt = distances[smallest] + graph[smallest][neighbor];
+      
+      if (alt < distances[neighbor]) {
+        distances[neighbor] = alt;
+        previous[neighbor] = smallest;
+        nodes.enqueue(neighbor, alt);
+      }
+    }
+  }
+  
+  return { distances, previous };
+}`;
+                    break;
+                default:
+                    code = 'Select an algorithm to view its implementation.';
+            }
+            
+            codeExplanation.innerHTML = `<pre class="text-xs"><code class="language-${language}">${code}</code></pre>`;
+        }
+
+        function updateAlgorithmExplanation(algorithm) {
+            let explanation = '';
+            
+            switch (algorithm) {
+                case 'bubble':
+                    explanation = `
+                        <p class="mb-2"><strong>Bubble Sort</strong> is a simple sorting algorithm that repeatedly steps through the list, compares adjacent elements and swaps them if they are in the wrong order.</p>
+                        <p class="mb-2"><strong>Time Complexity:</strong> O(n²) in worst and average case, O(n) in best case (already sorted).</p>
+                        <p class="mb-2"><strong>Space Complexity:</strong> O(1) as it's an in-place sorting algorithm.</p>
+                        <p><strong>Key Points:</strong> Easy to implement but inefficient for large datasets. Mainly used for educational purposes.</p>
+                    `;
+                    break;
+                case 'merge':
+                    explanation = `
+                        <p class="mb-2"><strong>Merge Sort</strong> is a divide-and-conquer algorithm that divides the input array into two halves, sorts each half recursively, and then merges the sorted halves.</p>
+                        <p class="mb-2"><strong>Time Complexity:</strong> O(n log n) in all cases.</p>
+                        <p class="mb-2"><strong>Space Complexity:</strong> O(n) due to the auxiliary space used for merging.</p>
+                        <p><strong>Key Points:</strong> Stable sort, excellent for large datasets but requires additional space. Often used for external sorting.</p>
+                    `;
+                    break;
+                case 'quick':
+                    explanation = `
+                        <p class="mb-2"><strong>Quick Sort</strong> is another divide-and-conquer algorithm that selects a 'pivot' element and partitions the array around the pivot.</p>
+                        <p class="mb-2"><strong>Time Complexity:</strong> O(n log n) average case, O(n²) worst case (rare with good pivot selection).</p>
+                        <p class="mb-2"><strong>Space Complexity:</strong> O(log n) due to recursion stack.</p>
+                        <p><strong>Key Points:</strong> Generally faster than merge sort in practice due to better cache performance. Not stable but can be made stable.</p>
+                    `;
+                    break;
+                case 'insertion':
+                    explanation = `
+                        <p class="mb-2"><strong>Insertion Sort</strong> builds the final sorted array one item at a time by repeatedly taking the next item and inserting it into the correct position.</p>
+                        <p class="mb-2"><strong>Time Complexity:</strong> O(n²) in worst and average case, O(n) in best case (already sorted).</p>
+                        <p class="mb-2"><strong>Space Complexity:</strong> O(1) as it's an in-place sorting algorithm.</p>
+                        <p><strong>Key Points:</strong> Efficient for small datasets or nearly sorted data. Often used as the recursive base case in hybrid sorts like Timsort.</p>
+                    `;
+                    break;
+                case 'bfs':
+                    explanation = `
+                        <p class="mb-2"><strong>Breadth-First Search (BFS)</strong> explores all nodes at the present depth level before moving on to nodes at the next depth level.</p>
+                        <p class="mb-2"><strong>Time Complexity:</strong> O(V + E) where V is vertices and E is edges.</p>
+                        <p class="mb-2"><strong>Space Complexity:</strong> O(V) in worst case.</p>
+                        <p><strong>Key Points:</strong> Finds the shortest path in unweighted graphs. Uses a queue data structure. Useful for finding connected components.</p>
+                    `;
+                    break;
+                case 'dfs':
+                    explanation = `
+                        <p class="mb-2"><strong>Depth-First Search (DFS)</strong> explores as far as possible along each branch before backtracking.</p>
+                        <p class="mb-2"><strong>Time Complexity:</strong> O(V + E) where V is vertices and E is edges.</p>
+                        <p class="mb-2"><strong>Space Complexity:</strong> O(V) in worst case.</p>
+                        <p><strong>Key Points:</strong> Uses a stack (either explicitly or via recursion). Useful for topological sorting, detecting cycles, and solving puzzles.</p>
+                    `;
+                    break;
+                case 'dijkstra':
+                    explanation = `
+                        <p class="mb-2"><strong>Dijkstra's Algorithm</strong> finds the shortest paths between nodes in a graph with non-negative edge weights.</p>
+                        <p class="mb-2"><strong>Time Complexity:</strong> O(E + V log V) with a priority queue.</p>
+                        <p class="mb-2"><strong>Space Complexity:</strong> O(V) for storing distances and previous nodes.</p>
+                        <p><strong>Key Points:</strong> Greedy algorithm. Doesn't work with negative weights. Used in routing and navigation systems.</p>
+                    `;
+                    break;
+                default:
+                    explanation = '<p>Select an algorithm to learn about how it works.</p>';
+            }
+            
+            algorithmExplanation.innerHTML = explanation;
+        }
+
+        function togglePlay() {
+            isPlaying = !isPlaying;
+            
+            if (isPlaying) {
+                playBtn.innerHTML = '<i class="fas fa-pause"></i> Pause';
+                playBtn.classList.remove('bg-blue-500');
+                playBtn.classList.add('bg-yellow-500');
+                startTime = performance.now();
+                startAnimation();
+            } else {
+                playBtn.innerHTML = '<i class="fas fa-play"></i> Play';
+                playBtn.classList.remove('bg-yellow-500');
+                playBtn.classList.add('bg-blue-500');
+                clearInterval(animationInterval);
+                updateTimeElapsed();
+            }
+        }
+
+        function startAnimation() {
+            if (!currentAlgorithm) return;
+            
+            animationInterval = setInterval(() => {
+                stepForward();
+            }, animationSpeed);
+        }
+
+        function stepForward() {
+            if (!currentAlgorithm) return;
+            
+            // In a real implementation, this would advance the algorithm one step
+            // For this demo, we'll just simulate some activity
+            
+            if (currentAlgorithm === 'bubble' || currentAlgorithm === 'merge' || 
+                currentAlgorithm === 'quick' || currentAlgorithm === 'insertion') {
+                simulateSortStep();
+            } else {
+                simulateGraphStep();
+            }
+            
+            updateCounters();
+            updateTimeElapsed();
+        }
+
+        function simulateSortStep() {
+            comparisons++;
+            
+            // Get all bars
+            const bars = document.querySelectorAll('.bar');
+            
+            // Randomly select two bars to compare (simulating algorithm behavior)
+            const i = Math.floor(Math.random() * (bars.length - 1));
+            const j = i + 1;
+            
+            // Highlight the bars being compared
+            bars[i].classList.add('bg-yellow-400');
+            bars[j].classList.add('bg-yellow-400');
+            
+            // Simulate swap with 30% probability
+            if (Math.random() < 0.3 && parseInt(bars[i].dataset.value) > parseInt(bars[j].dataset.value)) {
+                swaps++;
+                
+                // Swap values in array
+                [array[i], array[j]] = [array[j], array[i]];
+                
+                // Animate swap
+                setTimeout(() => {
+                    bars[i].classList.remove('bg-yellow-400');
+                    bars[j].classList.remove('bg-yellow-400');
+                    
+                    bars[i].classList.add('bg-red-500');
+                    bars[j].classList.add('bg-red-500');
+                    
+                    // Swap DOM elements
+                    visualizationContainer.insertBefore(bars[j], bars[i]);
+                    
+                    // Reset colors after animation
+                    setTimeout(() => {
+                        bars[i].classList.remove('bg-red-500');
+                        bars[j].classList.remove('bg-red-500');
+                        bars[i].classList.add('bg-indigo-400');
+                        bars[j].classList.add('bg-indigo-400');
+                    }, 300);
+                }, 300);
+            } else {
+                // Just reset colors if no swap
+                setTimeout(() => {
+                    bars[i].classList.remove('bg-yellow-400');
+                    bars[j].classList.remove('bg-yellow-400');
+                    bars[i].classList.add('bg-indigo-400');
+                    bars[j].classList.add('bg-indigo-400');
+                }, 300);
+            }
+            
+            // Check if sorted (for demo purposes)
+            if (isSorted()) {
+                completeSorting();
+            }
+        }
+
+        function simulateGraphStep() {
+            comparisons++;
+            
+            // Get all nodes
+            const nodes = document.querySelectorAll('.node');
+            
+            // Find the first unvisited node (simulating algorithm behavior)
+            const unvisitedNodes = graphNodes.filter(node => !node.visited);
+            if (unvisitedNodes.length === 0) {
+                completeGraphTraversal();
+                return;
+            }
+            
+            const nodeToVisit = unvisitedNodes[0];
+            nodeToVisit.visited = true;
+            
+            // Highlight the node being visited
+            const nodeElement = document.querySelector(`.node[data-id="${nodeToVisit.id}"]`);
+            nodeElement.classList.remove('fill-emerald-400');
+            nodeElement.classList.add('fill-purple-500');
+            
+            // Highlight edges to neighbors
+            const edgesToNeighbors = graphEdges.filter(edge => edge.source === nodeToVisit.id);
+            edgesToNeighbors.forEach(edge => {
+                const line = document.querySelector(`line[x1="${graphNodes.find(n => n.id === edge.source).x}"][y1="${graphNodes.find(n => n.id === edge.source).y}"][x2="${graphNodes.find(n => n.id === edge.target).x}"][y2="${graphNodes.find(n => n.id === edge.target).y}"]`);
+                if (line) {
+                    line.classList.add('stroke-yellow-400');
+                }
+                
+                // Mark neighbor as discovered
+                const neighbor = graphNodes.find(n => n.id === edge.target);
+                if (neighbor && !neighbor.visited) {
+                    const neighborElement = document.querySelector(`.node[data-id="${neighbor.id}"]`);
+                    neighborElement.classList.remove('fill-emerald-400');
+                    neighborElement.classList.add('fill-blue-400');
+                    
+                    // Update distance (simulating Dijkstra's)
+                    if (currentAlgorithm === 'dijkstra') {
+                        const newDistance = nodeToVisit.distance + edge.weight;
+                        if (newDistance < neighbor.distance) {
+                            neighbor.distance = newDistance;
+                            neighbor.previous = nodeToVisit.id;
+                        }
+                    }
+                }
+            });
+            
+            // Check if all nodes visited
+            if (graphNodes.every(node => node.visited)) {
+                completeGraphTraversal();
+            }
+        }
+
+        function isSorted() {
+            for (let i = 0; i < array.length - 1; i++) {
+                if (array[i] > array[i + 1]) {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        function completeSorting() {
+            clearInterval(animationInterval);
+            isPlaying = false;
+            playBtn.innerHTML = '<i class="fas fa-play"></i> Play';
+            playBtn.classList.remove('bg-yellow-500');
+            playBtn.classList.add('bg-blue-500');
+            
+            // Highlight all bars in green
+            const bars = document.querySelectorAll('.bar');
+            bars.forEach(bar => {
+                bar.classList.remove('bg-indigo-400');
+                bar.classList.add('bg-green-500');
+            });
+        }
+
+        function completeGraphTraversal() {
+            clearInterval(animationInterval);
+            isPlaying = false;
+            playBtn.innerHTML = '<i class="fas fa-play"></i> Play';
+            playBtn.classList.remove('bg-yellow-500');
+            playBtn.classList.add('bg-blue-500');
+            
+            // Highlight path from start to end (simulating shortest path)
+            if (currentAlgorithm === 'dijkstra') {
+                let currentNode = graphNodes[graphNodes.length - 1];
+                while (currentNode.previous) {
+                    const sourceNode = graphNodes.find(n => n.id === currentNode.previous);
+                    const line = document.querySelector(`line[x1="${sourceNode.x}"][y1="${sourceNode.y}"][x2="${currentNode.x}"][y2="${currentNode.y}"]`);
+                    if (line) {
+                        line.classList.remove('stroke-yellow-400');
+                        line.classList.add('stroke-green-500');
+                        line.style.strokeWidth = '3px';
+                    }
+                    currentNode = sourceNode;
+                }
+            }
+        }
+
+        function resetVisualization() {
+            clearInterval(animationInterval);
+            isPlaying = false;
+            playBtn.innerHTML = '<i class="fas fa-play"></i> Play';
+            playBtn.classList.remove('bg-yellow-500');
+            playBtn.classList.add('bg-blue-500');
+            
+            resetCounters();
+            
+            if (currentAlgorithm === 'bubble' || currentAlgorithm === 'merge' || 
+                currentAlgorithm === 'quick' || currentAlgorithm === 'insertion') {
+                generateNewArray();
+            } else {
+                generateNewGraph();
+            }
+        }
+
+        function resetCounters() {
+            comparisons = 0;
+            swaps = 0;
+            startTime = 0;
+            updateCounters();
+            updateTimeElapsed();
+        }
+
+        function updateCounters() {
+            comparisonCount.textContent = comparisons;
+            swapCount.textContent = swaps;
+        }
+
+        function updateTimeElapsed() {
+            if (startTime) {
+                timeElapsed.textContent = Math.floor(performance.now() - startTime);
+            } else {
+                timeElapsed.textContent = '0';
+            }
+        }
+    </script>
+</body>
+</html>
